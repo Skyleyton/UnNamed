@@ -29,6 +29,8 @@ State :: struct {
     // Audio things test.
     audio_engine: ma.engine,
     audio_playing: bool, // To know if the song is already playing, maybe I should take a reference to the song to know if it's not nil.
+    resource_manager: Resource_manager,
+    sprite_renderer: SpriteRenderer
 }
 
 // GLFW things.
@@ -147,140 +149,28 @@ main :: proc() {
     // audio_engine: ma.engine
     audio_init(&state); defer audio_end(&state)
 
-    // Les vertices des blocs.
-    // Pour la formation du bloc.
-    block_vertices := []f32 {
-        -0.5, -0.5, -0.5,
-         0.5, -0.5, -0.5,
-         0.5,  0.5, -0.5,
-         0.5,  0.5, -0.5,
-        -0.5,  0.5, -0.5,
-        -0.5, -0.5, -0.5,
+    // Init du système
+    shader: ShaderData
+    load_texture_into_resource_manager(&state.resource_manager, "assets/rock3.png", .RGBA, .ROCK3)
+    compile_vertex_shader(&shader, "shaders/vertex_shader.vert")
+    compile_fragment_shader(&shader, "shaders/fragment_shader.frag")
+    ShaderData_create_program(&shader)
+    put_shader_in_resource_manager(&state.resource_manager, &shader, "basic_shader")
+    projection: linalg.Matrix4f32 = linalg.matrix_ortho3d_f32(0.0, WIN_WIDTH, WIN_HEIGHT, 0.0, -1.0, 1.0)
 
-        -0.5, -0.5,  0.5,
-         0.5, -0.5,  0.5,
-         0.5,  0.5,  0.5,
-         0.5,  0.5,  0.5,
-        -0.5,  0.5,  0.5,
-        -0.5, -0.5,  0.5,
+    ShaderData_use_program(get_shader_from_resource_manager(state.resource_manager, "basic_shader"))
+    my_texture := ShaderData_get_uniform_location(shader, "my_texture")
+    proj := ShaderData_get_uniform_location(shader, "projection")
+    ShaderData_set_uniform_1i(shader, my_texture, 0)
+    ShaderData_set_uniform_matrix4fv(shader, proj, projection)
 
-        -0.5,  0.5,  0.5,
-        -0.5,  0.5, -0.5,
-        -0.5, -0.5, -0.5,
-        -0.5, -0.5, -0.5,
-        -0.5, -0.5,  0.5,
-        -0.5,  0.5,  0.5,
-
-         0.5,  0.5,  0.5,
-         0.5,  0.5, -0.5,
-         0.5, -0.5, -0.5,
-         0.5, -0.5, -0.5,
-         0.5, -0.5,  0.5,
-         0.5,  0.5,  0.5,
-
-        -0.5, -0.5, -0.5,
-         0.5, -0.5, -0.5,
-         0.5, -0.5,  0.5,
-         0.5, -0.5,  0.5,
-        -0.5, -0.5,  0.5,
-        -0.5, -0.5, -0.5,
-
-        -0.5,  0.5, -0.5,
-         0.5,  0.5, -0.5,
-         0.5,  0.5,  0.5,
-         0.5,  0.5,  0.5,
-        -0.5,  0.5,  0.5,
-        -0.5,  0.5, -0.5
-    }
-
-    // Pour la texture des blocs.
-    block_textures := []f32 {
-        0.0, 0.0,
-        1.0, 0.0,
-        1.0, 1.0,
-        1.0, 1.0,
-        0.0, 1.0,
-        0.0, 0.0,
-
-        0.0, 0.0,
-        1.0, 0.0,
-        1.0, 1.0,
-        1.0, 1.0,
-        0.0, 1.0,
-        0.0, 0.0,
-
-        1.0, 0.0,
-        1.0, 1.0,
-        0.0, 1.0,
-        0.0, 1.0,
-        0.0, 0.0,
-        1.0, 0.0,
-
-        1.0, 0.0,
-        1.0, 1.0,
-        0.0, 1.0,
-        0.0, 1.0,
-        0.0, 0.0,
-        1.0, 0.0,
-
-        0.0, 1.0,
-        1.0, 1.0,
-        1.0, 0.0,
-        1.0, 0.0,
-        0.0, 0.0,
-        0.0, 1.0,
-
-        0.0, 1.0,
-        1.0, 1.0,
-        1.0, 0.0,
-        1.0, 0.0,
-        0.0, 0.0,
-        0.0, 1.0,
-    }
-
-    chunk: Chunk
-    chunk_init_with_dirt(&chunk)
-
-    for i in 0..<16 {
-        chunk_set_block_at_position(&chunk, .AIR, i, 5, 7)
-    }
-
-    vertices := chunk_meshing(chunk)
-
-    vao: u32
-    vbo : [2]u32
-    gl.GenBuffers(len(vbo), raw_data(vbo[:]))
-    gl.GenVertexArrays(1, &vao)
-
-    gl.BindVertexArray(vao)
-
-    // Position
-    gl.BindBuffer(gl.ARRAY_BUFFER, vbo[0])
-    gl.BufferData(gl.ARRAY_BUFFER, size_of(vertices[0]) * len(vertices), raw_data(vertices[:]), gl.STATIC_DRAW)
-    gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 3 * size_of(f32), uintptr(0))
-    gl.EnableVertexAttribArray(0)
-
-    fmt.println()
-
-    // Texture
-    // gl.BindBuffer(gl.ARRAY_BUFFER, vbo[1])
-    // gl.BufferData(gl.ARRAY_BUFFER, size_of(textures[0]) * len(textures), raw_data(textures[:]), gl.STATIC_DRAW)
-    // gl.VertexAttribPointer(1, 2, gl.FLOAT, gl.FALSE, 2 * size_of(f32), uintptr(0))
-    // gl.EnableVertexAttribArray(1)
-
-    // Chargement de la texture.
-    texture_id := texture_load_from_file("assets/wall.jpg", .RGB)
-
-    gl.Enable(gl.DEPTH_TEST)
-
-    shader_data: ShaderData
-    ShaderData_compile_vertex_shader(&shader_data, "shaders/camera_shader.vert")
-    ShaderData_compile_fragment_shader(&shader_data, "shaders/fragment_shader.frag")
-    ShaderData_create_program(&shader_data)
-    ShaderData_use_program(shader_data)
+    sprite_renderer_init(&state.sprite_renderer, state.resource_manager.shaders["basic_shader"])
+    load_texture_into_resource_manager(&state.resource_manager, "assets/rock3.png", .RGBA, .ROCK3)
+    
+    current_time: f32
 
     // for dt
-    current_time: f32
+    // current_time: f32
     previous_time: f32 = f32(glfw.GetTime())
 
     // for frame count
@@ -305,28 +195,8 @@ main :: proc() {
         custom_process_input(&state, f32(dt))
 
         // rendering
-        custom_clear({1.0, 0.5, 0.5, 1.0})
-        ShaderData_use_program(shader_data)
-
-        // Uniforms
-        projection_mat := linalg.matrix4_perspective_f32(linalg.to_radians(camera.zoom), f32(WIN_WIDTH) / f32(WIN_HEIGHT), 0.1, 100.0)
-        projection_loc := ShaderData_get_uniform_location(shader_data, "projection")
-        ShaderData_set_uniform_mat(shader_data, projection_loc, projection_mat)
-
-        view_mat := Camera_get_view_matrix(camera)
-        view_loc := ShaderData_get_uniform_location(shader_data, "view")
-        ShaderData_set_uniform_mat(shader_data, view_loc, view_mat)
-
-        model_mat := linalg.MATRIX4F32_IDENTITY
-        model_mat = linalg.matrix4_translate_f32({0.0, 0.0, 0.0})
-        // model_mat = linalg.matrix4_scale_f32({0.25, 0.25, 0.25})
-        model_loc := ShaderData_get_uniform_location(shader_data, "model")
-        ShaderData_set_uniform_mat(shader_data, model_loc, model_mat)
-
-        gl.BindTexture(gl.TEXTURE_2D, texture_id)
-        gl.BindVertexArray(vao)
-        gl.DrawArrays(gl.TRIANGLES, 0, i32(len(vertices)))
-        gl.BindVertexArray(0)
+        custom_clear({0.5, 0.5, 0.5, 1.0})
+        sprite_renderer_draw(state.sprite_renderer, get_texture_from_resource_manager(state.resource_manager, .ROCK3), {500.0, 500.0}, {1.0, 1.0}, 0.0, {0.0, 1.0, 0.0})
 
         // get the events and swap the front and back buffers
         glfw.PollEvents()

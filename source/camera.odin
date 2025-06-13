@@ -61,10 +61,6 @@ Camera_process_keyboard_input :: proc(camera: ^Camera, cam_direction: CameraDire
     velocity: f32 = camera.movement_speed * delta_time
 
     switch cam_direction {
-        case .FORWARD:
-            camera.position += camera.front * velocity
-        case .BACKWARD:
-            camera.position -= camera.front * velocity
         case .LEFT:
             camera.position -= camera.right * velocity
         case .RIGHT:

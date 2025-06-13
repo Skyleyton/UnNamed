@@ -5,9 +5,15 @@ TextureType :: enum {
     RGBA
 }
 
+TextureArchetype :: enum {
+    GRASS,
+    ROCK3
+}
+
 Texture :: struct {
     texture_id: u32,
-    width: u32,
-    height: u32,
-    type: TextureType
+    width: i32,
+    height: i32,
+    type: TextureType,
+    archetype: TextureArchetype
 }

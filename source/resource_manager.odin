@@ -1,16 +1,18 @@
 package main
 
 import "core:fmt"
+import "core:os"
+import "core:strings"
 
 import gl "vendor:OpenGL"
 import stbi "vendor:stb/image"
 
 Resource_manager :: struct {
-    shaders: map[string]ShaderData,
-    textures: map[string]u32
+    shaders: map[string]^ShaderData, // Store reference to ShaderData, to get the update from main program.
+    textures: map[TextureArchetype]Texture
 }
 
-texture_load_from_file :: proc(texture_path: cstring, texture_type: TextureType) -> Texture {
+load_texture_into_resource_manager :: proc(resource_manager: ^Resource_manager, texture_path: cstring, texture_type: TextureType, archetype: TextureArchetype) -> Texture {
     img_width, img_height, num_channels: i32
     stbi.set_flip_vertically_on_load(1)
     img_data: [^]u8 = stbi.load(texture_path, &img_width, &img_height, &num_channels, 0)
@@ -39,12 +41,20 @@ texture_load_from_file :: proc(texture_path: cstring, texture_type: TextureType)
     stbi.image_free(img_data) // On aurait pu faire juste un free(img_data) [^]u8 est un rawptr si je comprends bien dans Odin.
 
     texture := (Texture){
-        .type = texture_type,
-        .width = img_width,
-        .height = img_height
+        type = texture_type,
+        width = img_width,
+        height = img_height,
+        texture_id = texture_id,
+        archetype = archetype
     }
 
-    return texture_id
+    resource_manager.textures[archetype] = texture
+
+    return texture
+}
+
+get_texture_from_resource_manager :: proc(resource_manager: Resource_manager, texture_archetype: TextureArchetype) -> Texture {
+    return resource_manager.textures[texture_archetype]
 }
 
 
@@ -89,6 +99,14 @@ compile_fragment_shader :: proc(shader: ^ShaderData, fragment_shader_filepath: s
 }
 
 compile_shaders :: proc(shader: ^ShaderData, vertex_shader_filepath, fragment_shader_filepath: string) {
-    ShaderData_compile_vertex_shader(shader, vertex_shader_filepath)
-    ShaderData_compile_fragment_shader(shader, fragment_shader_filepath)
+    compile_vertex_shader(shader, vertex_shader_filepath)
+    compile_fragment_shader(shader, fragment_shader_filepath)
+}
+
+put_shader_in_resource_manager :: proc(resource_manager: ^Resource_manager, shader: ^ShaderData, shader_name: string) {
+    resource_manager.shaders[shader_name] = shader
+}
+
+get_shader_from_resource_manager :: proc(resource_manager: Resource_manager, shader_name: string) -> ShaderData {
+    return resource_manager.shaders[shader_name]^
 }

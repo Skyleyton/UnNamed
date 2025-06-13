@@ -1,4 +1,4 @@
-package main
+package utils
 
 // The true position of dimensions is position.x + dimensions.x and position.y + dimensions.y
 Rectangle :: struct {

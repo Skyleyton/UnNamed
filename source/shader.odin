@@ -51,7 +51,7 @@ ShaderData_set_uniform_float :: proc {
     ShaderData_set_uniform_1f,
     ShaderData_set_uniform_2f,
     ShaderData_set_uniform_3f,
-    ShaderData_set_uniform_4f
+    ShaderData_set_uniform_4f,
 }
 
 ShaderData_set_uniform_1f :: proc(shader: ShaderData, uniform_location: i32, float0: f32) {
@@ -75,7 +75,7 @@ ShaderData_set_uniform_int :: proc {
     ShaderData_set_uniform_1i,
     ShaderData_set_uniform_2i,
     ShaderData_set_uniform_3i,
-    ShaderData_set_uniform_4i
+    ShaderData_set_uniform_4i,
 }
 
 ShaderData_set_uniform_1i :: proc(shader: ShaderData, uniform_location: i32, i0: i32) {
@@ -97,8 +97,8 @@ ShaderData_set_uniform_4i :: proc(shader: ShaderData, uniform_location: i32, i0,
 ShaderData_set_uniform_mat :: proc {
     ShaderData_set_uniform_matrix2fv,
     ShaderData_set_uniform_matrix3fv,
-    ShaderData_set_uniform_matrix4fv
-}
+    ShaderData_set_uniform_matrix4fv,
+    }
 
 // Matrix uniforms
 ShaderData_set_uniform_matrix2fv :: proc(shader: ShaderData, uniform_location: i32, mat2: linalg.Matrix2f32) {

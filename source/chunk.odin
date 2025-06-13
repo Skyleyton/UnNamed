@@ -1,5 +1,6 @@
-/* package main
+package main
 
+/*
 import "core:fmt"
 
 MAX_BLOCKS :: 16
