@@ -17,46 +17,6 @@ ShaderData :: struct {
     program_id: u32
 }
 
-ShaderData_compile_vertex_shader :: proc(shader: ^ShaderData, vertex_shader_filepath: string) {
-    data, error := os.read_entire_file(vertex_shader_filepath)
-    if !error {
-        fmt.printf("Can't find the shader path: %v\n", vertex_shader_filepath)
-    }
-    data_str := string(data)
-    data_cstring := strings.unsafe_string_to_cstring(data_str)
-
-    shader.vertex_id = gl.CreateShader(gl.VERTEX_SHADER)
-    gl.ShaderSource(shader.vertex_id, 1, &data_cstring, nil)
-    gl.CompileShader(shader.vertex_id)
-
-    success: i32
-    info_log: [512]u8
-    gl.GetShaderiv(shader.vertex_id, gl.COMPILE_STATUS, &success)
-    if success != 1 {
-        gl.GetShaderInfoLog(shader.vertex_id, len(info_log), nil, raw_data(info_log[:]))
-    }
-}
-
-ShaderData_compile_fragment_shader :: proc(shader: ^ShaderData, fragment_shader_filepath: string) {
-    data, error := os.read_entire_file(fragment_shader_filepath)
-    if !error {
-        fmt.printf("Can't find the shader path: %v\n", fragment_shader_filepath)
-    }
-    data_str := string(data)
-    data_cstring := strings.unsafe_string_to_cstring(data_str)
-
-    shader.fragment_id = gl.CreateShader(gl.FRAGMENT_SHADER)
-    gl.ShaderSource(shader.fragment_id, 1, &data_cstring, nil)
-    gl.CompileShader(shader.fragment_id)
-
-    success: i32
-    info_log: [512]u8
-    gl.GetShaderiv(shader.fragment_id, gl.COMPILE_STATUS, &success)
-    if success != 1 {
-        gl.GetShaderInfoLog(shader.fragment_id, len(info_log), nil, raw_data(info_log[:]))
-    }
-}
-
 ShaderData_create_program :: proc(shader: ^ShaderData) {
     shader.program_id = gl.CreateProgram()
 
